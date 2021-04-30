@@ -6,7 +6,6 @@
 import plotly
 import plotly.graph_objs as go
 import sqlite3
-import pandas as pd
 
 recipes_columns = [
     "Name",
@@ -262,7 +261,6 @@ def bar_chart_bins_prep(data_list, thresholds):
         bin_counts[i] = 0
 
     for data in data_list:
-        print(data) #########################
         try:
             data = float(data)
             if data <= thresholds[0]:
@@ -273,14 +271,12 @@ def bar_chart_bins_prep(data_list, thresholds):
                     if data > thresholds[i-1] and data <= thresholds[i]: #0, 1 #1, 2 #3, 4
                         bin_counts[i] += 1 #1 #2 #4
                         break
-            print('counted!') #########################
         except:
             data_list.remove(data)
 
     for i in range(len(thresholds)):
         bin_values.append(bin_counts[i])
 
-    print(f'bin values: {bin_values}') ####################################
 
     return bin_values
 

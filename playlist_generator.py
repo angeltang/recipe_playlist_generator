@@ -365,8 +365,8 @@ def ask_table():
 def generate_playlist(recipe):
     max_time = process_time_to_seconds(recipe.time)
     genre = ask_genre()
-    
-    try: 
+
+    try:
         playlist = create_playlist(genre, recipe)
         playlist_id = playlist.id
         length = add_tracks(playlist_id, genre, max_time)
@@ -394,8 +394,3 @@ def generate_playlist(recipe):
         generate_playlist(recipe)
 
     return
-
-'''
-TODO:
-- 100 records?
-'''
