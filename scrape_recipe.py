@@ -15,7 +15,24 @@ import sqlite
 import main
 
 class Recipe:
+
     def __init__(self, name, rating, url, time='', serving=0, directions=[]):
+        '''initiate a Recipe
+
+        Parameters
+        ----------
+        self
+        name: recipe name
+        rating: float, average rating of the recipe
+        url: string, source url from allrecipes.com
+        time: string, cooking time, default to empty
+        serving: int, serving size of the recipe, default to 0
+        directions: a list of directions, default to []
+
+        Returns
+        -------
+        None
+        '''
         self.name = name
         self.rating = rating
         self.time = time
@@ -24,16 +41,48 @@ class Recipe:
         self.url = url
 
     def info(self):
+        '''prints recipe info
+
+        Parameters
+        ----------
+        self
+
+        Returns
+        -------
+        a string with recipe info
+        '''
         # does not include url
         return f'{emoji.emojize(":pushpin:", use_aliases=True)} {self.name} (Rating: {self.rating})'
 
 def generate_search_url(input):
+    '''generates search url on allrecipes.com
+
+    Parameters
+    ----------
+    input: a string from user input
+
+    Returns
+    -------
+    url: string, a url to make request to
+    '''
+
     base_url = 'https://www.allrecipes.com/search/results/?search='
     param = input.replace(' ','+')
     url = base_url + param + '&page=1'
     return url
 
 def get_recipes(search_url):
+    '''get recipes from allrecipes.com
+
+    Parameters
+    ----------
+    search_url: string, URL generated from user input in generate_search_url()
+
+    Returns
+    -------
+    recipes: a dict of Recipe objects with an index as the key
+    '''
+
     print('Looking for recipes...')
 
     html = requests.get(search_url).text
@@ -77,6 +126,18 @@ def get_recipes(search_url):
         ask_param()
 
 def print_recipes(input, recipes):
+    '''print recipes to console
+
+    Parameters
+    ----------
+    input: string, user input
+    recipes: a dict of Recipe objects with an index as the key
+
+    Returns
+    -------
+    None
+    '''
+
     header = f'''
 ============================
 Recipes for {input}
@@ -92,6 +153,17 @@ Recipes for {input}
     return
 
 def get_recipe_details(recipes):
+    '''get recipe details per user's choice
+
+    Parameters
+    ----------
+    recipes: a dict of Recipe objects with an index as the key
+
+    Returns
+    -------
+    None
+    '''
+
     total = len(recipes)
     user = input(emoji.emojize(':sparkles: Type in the number of the recipe you want to know more about, or type "nah": (To leave, enter "bye":wave:) ', use_aliases=True))
     user = user.strip().lower()
@@ -144,6 +216,17 @@ def get_recipe_details(recipes):
             return
 
 def print_recipe_detail(recipe):
+    '''print recipe detail to console
+
+    Parameters
+    ----------
+    recipe: a Recipe object
+
+    Returns
+    -------
+    yes: boolean, whether the user wants to generate a playlist
+    '''
+
     header = f'========= details ==========\n{recipe.info()}\n============================'
     print(header)
     print(f'Time: {recipe.time}\nServing(s): {recipe.serving}')
@@ -156,6 +239,17 @@ def print_recipe_detail(recipe):
     return yes
 
 def ask_playlist(recipe):
+    '''asks the user if they want to genreate a playlist for that recipe
+
+    Parameters
+    ----------
+    recipe: a Recipe object
+
+    Returns
+    -------
+    yes: boolean, whether the user wants to generate a playlist
+    '''
+
     user = input(emoji.emojize(':sparkles: Want to generate a playlist for making this recipe? Type "ya" or "nah" to let me know: ', use_aliases=True))
     user = user.strip().lower()
     yes = False
@@ -170,6 +264,17 @@ def ask_playlist(recipe):
         ask_playlist(recipe)
 
 def ask_bar_chart():
+    '''asks the user if they want to see a bar chart of a specific column
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    None
+    '''
+
     user = input(emoji.emojize(':sparkles: Want to see some stats from all your searches so far? Type "rating", "serving", "time", or "nah" to let me know:  ', use_aliases=True))
     user = user.lower().strip()
 
@@ -207,6 +312,17 @@ def ask_bar_chart():
 
 
 def ask_param():
+    '''asks the user what recipes they want to explore today
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    None
+    '''
+
     user = input(emoji.emojize(':sparkles: What recipes do you want to explore today? (To leave, enter "bye" :wave:) ', use_aliases=True))
     user = user.strip().lower()
     if user == 'bye':

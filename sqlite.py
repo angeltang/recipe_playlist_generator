@@ -26,7 +26,8 @@ playlists_columns = [
 ]
 
 def create_data():
-    '''Creating database and table if not existed. If existed, drop the table
+    '''Creating database and table if not existed.
+    (Optional: If existed, drop the table)
 
     Parameters
     ----------
@@ -38,7 +39,7 @@ def create_data():
     conn = sqlite3.connect("./recipes_and_playlists.sqlite")
     cur = conn.cursor()
 
-
+    # OPTIONAL: DROP THE TABLE IF EXISTED TO RESTART THE RECORDS
     # drop_recipes = '''    DROP TABLE IF EXISTS "recipes";'''
     # cur.execute(drop_recipes)
     # drop_playlists = '''    DROP TABLE IF EXISTS "playlists";'''
@@ -75,7 +76,8 @@ def create_data():
     conn.close()
 
 def update_data(tablename, values):
-    '''getting data from database and converted into a dictoinary
+    '''insert data into the database
+
     Parameters
     values: list of records(lists)
     ----------
@@ -93,21 +95,22 @@ def update_data(tablename, values):
 
 
 def check_database(name, tablename, database_list, data):
-    '''check if the city relatated restaurant data is inside the database.
-    If not, insert the data. If it is, get the data from the database
-    in the end combine the data
+    '''check if name is in the specified table
+    If so, delete that record and update it with the additional details;
+    If not, insert the record with update_data()
 
     Parameters
     ----------
-    city_name: city name
+    name: recipe name or playlist name
+    tablename: the table to insert; "recipes" or "playlists"
     database_list: the list of data that are already in the database
+    data: the updated data
 
     Returns
     -------
-    recipe_playlist_dict: the dictionary of the restaurant info
     database_list: updated data list
-
     '''
+
     print('... checking database ...')
     conn = sqlite3.connect("./recipes_and_playlists.sqlite")
     cur = conn.cursor()
@@ -133,6 +136,18 @@ def check_database(name, tablename, database_list, data):
     return database_list
 
 def fetch_data_to_dict(name, tablename):
+    '''fetch data from database and convert it to a dict
+
+    Parameters
+    ----------
+    name: recipe name or playlist name
+    tablename: the table to insert; "recipes" or "playlists"
+
+    Returns
+    -------
+    data_dict: a dict with data from the database
+    '''
+
     conn = sqlite3.connect('./recipes_and_playlists.sqlite')
     cur = conn.cursor()
     select = f'SELECT * FROM {tablename} WHERE Name="{name}"'
@@ -154,6 +169,17 @@ def fetch_data_to_dict(name, tablename):
     return data_dict
 
 def fetch_combined_to_dict():
+    '''fetch combined data from database and convert it to a dict
+    Note: data combined with the foreign key (recipe name)
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    data_dict: a dict with data from the database
+    '''
+
     conn = sqlite3.connect('./recipes_and_playlists.sqlite')
     cur = conn.cursor()
     join = f"SELECT * FROM recipes JOIN playlists ON recipes.Name=playlists.Recipe_Name"
@@ -175,37 +201,17 @@ def fetch_combined_to_dict():
     conn.close()
     return data_dict
 
-# data_dict = fetch_combined_to_dict()
-# show_table(data_dict)
-
-# def fetch_data_to_dataframe():
-#     '''getting data from database and converted into a dictionary to create plot
-
-#     Parameters
-#     ----------
-#     cur: data from the table
-
-#     Returns
-#     -------
-#     dict
-#         a dictionary from the database
-#     '''
-#     conn = sqlite3.connect("./recipes_and_playlists.sqlite")
-#     recipe_playlist_dict = pd.read_sql_query("SELECT playlists.*, recipes.Name, recipes.Url, recipes.Time FROM recipes INNER JOIN playlists ON recipes.Name=playlists.Recipe_Name", conn)
-#     conn.close()
-#     return recipe_playlist_dict
-
-
 def show_table(data_dict):
-    '''transfer the dictionary to display into a table
+    '''transfer the dictionary of combined data to display into a table
 
     Parameters
     ----------
-    recipe_playlist_dict: dictionary of the resutaurant info
+    data_dict: a dict with combined data from the database
 
     Returns
     -------
     None
+    Output: opens a figure in the browser with plotly
     '''
     playlists_columns_copy = playlists_columns
     recipes_columns_copy = recipes_columns
@@ -214,10 +220,6 @@ def show_table(data_dict):
         for column in table:
             if column in ['Id', 'Directions', 'Recipe_Name','Playlist_Name','Playlist_Id','Duration(s)']:
                 table.remove(column)
-
-    # recipes_columns_copy.remove('Directions')
-    # playlists_columns_copy.remove('Playlist_Name')
-    # playlists_columns_copy.remove('Recipe_Name')
 
     columns = recipes_columns_copy + playlists_columns_copy
     columns.remove('Playlist_Id')
@@ -238,6 +240,19 @@ def show_table(data_dict):
     fig.show()
 
 def bar_chart_data_prep(column, tablename):
+    '''fetch column data from the specified table in the database
+    and translate it to a list
+
+    Parameters
+    ----------
+    column: the column name
+    tablename: the table name (recipes or playlists)
+
+    Returns
+    -------
+    data_list: a list of retrived data
+    '''
+
     conn = sqlite3.connect('./recipes_and_playlists.sqlite')
     cur = conn.cursor()
     select = f'SELECT {column} FROM {tablename}'
@@ -253,6 +268,18 @@ def bar_chart_data_prep(column, tablename):
     return data_list
 
 def bar_chart_bins_prep(data_list, thresholds):
+    '''separates the data by thresholds into bins
+
+    Parameters
+    ----------
+    data_list: a list of single column data
+    thresholds: thresholds to separate bins
+
+    Returns
+    -------
+    bin_values: a list of counts per bin
+    '''
+
     #thresholds_rating = [1, 2, 3, 4, 5]
     bin_counts = {}
     bin_values = []
@@ -281,6 +308,20 @@ def bar_chart_bins_prep(data_list, thresholds):
     return bin_values
 
 def show_bar_chart(bins, bin_values, title, xaxis):
+    '''transfer the dictionary of combined data to display into a table
+
+    Parameters
+    ----------
+    bins: a list of names of the bins
+    bin_values: a list of counts per bin
+    title: graph title
+    xaxis: x-axis title
+
+    Returns
+    -------
+    None
+    Output: opens a figure in the browser with plotly
+    '''
 
     print('... opening browser to show chart ...')
     data = [go.Bar(

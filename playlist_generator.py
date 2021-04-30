@@ -34,6 +34,22 @@ user_id = secrets.USER_ID
 
 class Playlist:
     def __init__(self, name, id, href, recipe_name, genre, duration=0):
+        '''initiate a Playlist
+
+        Parameters
+        ----------
+        self
+        name: playlist name
+        id: playlist id issued by Spotify
+        href: playlist url on Spotify
+        recipe_name: the recipe_name that this playlist is made for
+        genre: the genre of this playlist
+        duration: the total length of this playlist (in seconds)
+
+        Returns
+        -------
+        None
+        '''
         self.name = name
         self.id = id
         self.href = href
@@ -42,6 +58,16 @@ class Playlist:
         self.duration = duration # in seconds
 
     def info(self):
+        '''prints playlist info
+
+        Parameters
+        ----------
+        self
+
+        Returns
+        -------
+        a string with playlist info
+        '''
         total_seconds = int(self.duration)
         minutes = math.floor(total_seconds/60)
         seconds = total_seconds%60
@@ -87,6 +113,16 @@ def save_cache(cache_dict):
     fw.close()
 
 def encode_header():
+    '''encords the client info into an authorization header
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    headers: a string with encoded client info
+    '''
     # Encode as Base64
     message = f"{client_key}:{client_secret}"
     messageBytes = message.encode('ascii')
@@ -99,6 +135,16 @@ def encode_header():
 AUTH_HEADERS = encode_header()
 
 def authenticate():
+    '''authenticates the user
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    refresh_token: the token required to get new access token in case the old one expires
+    '''
 
     # HANDLE NO CLIENT INFO
     if not client_key or not client_secret:
@@ -142,6 +188,17 @@ def authenticate():
 REFRESH_TOKEN = authenticate()
 
 def get_access_token():
+    '''get new access token from the refresh_token
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    access_token: a string required to make API requests
+    '''
+
     # POST
     TOKEN_URL = 'https://accounts.spotify.com/api/token'
     auth_response = requests.post(TOKEN_URL, {
@@ -152,12 +209,22 @@ def get_access_token():
     return access_token
 
 def create_headers():
+    '''create headers required for each API request
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    headers: a string formatted to include access_token
+    '''
+
     access_token = get_access_token()
     headers = {'Authorization': 'Bearer {token}'.format(token=access_token), 'Content-Type': 'application/json'}
     return headers
 
 def make_request(baseurl, params):
-    # CHANGE DOCSTRING!
     ''' constructs a key that is guaranteed to uniquely and
     repeatably identify an API request by its baseurl and params
 
@@ -182,22 +249,12 @@ def make_request_with_cache(baseurl, genre):
     combo. If the result is found, return it. Otherwise send a new
     request, save it, then return it.
 
-    AUTOGRADER NOTES: To test your use of caching in the autograder, please do the following:
-    If the result is in your cache, print "fetching cached data"
-    If you request a new result using make_request(), print "making new request"
-
-    Do not include the print statements in your return statement. Just print them as appropriate.
-    This, of course, does not ensure that you correctly retrieved that data from your cache,
-    but it will help us to see if you are appropriately attempting to use the cache.
-
     Parameters
     ----------
     baseurl: string
         The URL for the API endpoint
-    hashtag: string
-        The hashtag to search for
-    count: integer
-        The number of results you request from Twitter
+    genre: string
+        The genre that the user is interested in
 
     Returns
     -------
@@ -205,6 +262,7 @@ def make_request_with_cache(baseurl, genre):
         the results of the query as a dictionary loaded from cache
         JSON
     '''
+
     if genre in CACHE_DICT.keys():
         print("... fetching cached data ...")
     else:
@@ -233,6 +291,17 @@ def make_request_with_cache(baseurl, genre):
     return CACHE_DICT[genre]
 
 def make_genre_dict():
+    '''make a dictionary of genres from the Spotify API
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    genre_dict: a dict with all genres
+    '''
+
     baseurl = 'https://api.spotify.com/v1/recommendations/available-genre-seeds'
     params = ''
     temp_dict = make_request(baseurl, params)
@@ -245,6 +314,17 @@ def make_genre_dict():
     return genre_dict
 
 def print_genres(genre_dict):
+    '''print all genres to console
+
+    Parameters
+    ----------
+    genre_dict: a dict with all genres
+
+    Returns
+    -------
+    None
+    '''
+
     header = f'''
 =========================================
 {emoji.emojize(":musical_note:", use_aliases=True)} All Spotify Genres (Alphabetical)
@@ -256,6 +336,18 @@ def print_genres(genre_dict):
     return
 
 def calculate_playlist_length(current_time, track):
+    '''calculate playlist length
+
+    Parameters
+    ----------
+    current_time: the current playlist length
+    track: the track to add
+
+    Returns
+    -------
+    total: the updated playlist length
+    '''
+
     #retrive track length
     duration = track['duration']
     #add to current_time
@@ -263,6 +355,18 @@ def calculate_playlist_length(current_time, track):
     return total
 
 def create_playlist(genre, recipe):
+    '''create a playlist based on user inputs
+
+    Parameters
+    ----------
+    genre: the genre chosen by user
+    recipe: the recipe chosen by user
+
+    Returns
+    -------
+    a Playlist object: empty with no tracks
+    '''
+
     name = f'{genre.title()} for Cooking {recipe.name}'
     recipe_name = recipe.name
 
@@ -291,6 +395,22 @@ def create_playlist(genre, recipe):
     return Playlist(name, playlist_id, playlist_href, recipe_name, genre)
 
 def add_tracks(playlist_id, genre, max_time):
+    '''add tracks of the requested genre to a playlist
+    The function checks if the current playlist length has exceeded the cooking time (max_time),
+    if yes, it'll stop adding new songs;
+    else it'll add one more song and make the length check again.
+
+    Parameters
+    ----------
+    playlist_id: the playlist id issued by Spotify
+    genre: the genre chosen by user
+    max_time: the cooking time of the recipe
+            * not a true "max"
+
+    Returns
+    -------
+    current_time: the updated playlist length
+    '''
 
     baseurl_genre = 'https://api.spotify.com/v1/search'
     songs_dict = make_request_with_cache(baseurl_genre, genre)
@@ -320,6 +440,17 @@ def add_tracks(playlist_id, genre, max_time):
     return current_time
 
 def ask_genre():
+    '''ask user for genre
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    genre: a string of genre to search Spotify tracks for
+    '''
+
     GENRES = make_genre_dict()
     print_genres(GENRES)
     user = input(emoji.emojize(':sparkles: What genre do you want the playlist to be? (To leave, type "bye" :wave:) ', use_aliases=True))
@@ -338,6 +469,17 @@ def ask_genre():
 
 
 def process_time_to_seconds(time_string):
+    '''process the time_strings of the recipe to seconds
+
+    Parameters
+    ----------
+    time_string: a formatted string of cooking time
+
+    Returns
+    -------
+    seconds: int, the cooking time in seconds
+    '''
+
     pattern = r'((\d*)\s*hrs?)?\s*(\d+)?'
     time = re.search(pattern, time_string)
     try:
@@ -349,6 +491,17 @@ def process_time_to_seconds(time_string):
     return seconds
 
 def ask_table():
+    '''asks the user whether they want to export the recipe-playlist results to a table
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    None
+    '''
+
     user = input(emoji.emojize(':sparkles: Want to export all the existing recipes with playlists? Type "ya" or "nah" to let me know: ', use_aliases=True))
     user = user.lower().strip()
     if user == 'ya':
@@ -363,6 +516,18 @@ def ask_table():
         ask_table()
 
 def generate_playlist(recipe):
+    '''generates a playlist based on the user's choice of recipe
+    and opens in browser
+
+    Parameters
+    ----------
+    recipe: a Recipe object
+
+    Returns
+    -------
+    None
+    '''
+
     max_time = process_time_to_seconds(recipe.time)
     genre = ask_genre()
 
